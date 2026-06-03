@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrucciones de Ejecución - Test Harness</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --bg: #f8f9fa;
+            --text: #333;
+        }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 40px 20px; 
+            line-height: 1.6; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #fff; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+        }
+        h1 { color: var(--primary); border-bottom: 3px solid var(--secondary); padding-bottom: 10px; margin-top: 0; }
+        h2 { color: var(--secondary); margin-top: 35px; display: flex; align-items: center; gap: 10px; }
+        h2 span { background: var(--secondary); color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1rem; }
+        pre { 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            overflow-x: auto; 
+            font-family: 'Courier New', Courier, monospace; 
+            border-left: 4px solid var(--secondary);
+        }
+        .note { 
+            background-color: #fff3cd; 
+            border-left: 5px solid #ffc107; 
+            padding: 15px 20px; 
+            margin-top: 20px; 
+            border-radius: 4px; 
+        }
+        .note strong { color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Guía de Ejecución: Test Harness Local</h1>
+        <p>Esta guía te mostrará paso a paso cómo probar y ejecutar el entorno de evaluación de recuperación de información en tu propia computadora.</p>
+
+        <div>
+            <h2><span>1</span> Instalar Dependencias</h2>
+            <p>Primero, asegúrate de tener Python 3.10+ instalado. Abre tu terminal de comandos, navega a la carpeta del proyecto e instala los requerimientos:</p>
+            <pre><code>cd ~/TABD/proyecto_investigacion
+pip install -r requirements.txt</code></pre>
+            <p><i>Nota: Las dependencias incluyen pandas (para los CSV), chromadb y sentence-transformers (para el motor vectorial), y pdfplumber (para leer los PDF).</i></p>
+        </div>
+
+        <div>
+            <h2><span>2</span> Colocar tu Documento (Opcional)</h2>
+            <p>El código generará datos "dummy" la primera vez, pero para hacer la prueba real, coloca tu archivo PDF médico dentro de la ruta:</p>
+            <pre><code>data/pdfs/documento_minsa_dummy.pdf</code></pre>
+            <p>Si tu PDF se llama diferente, asegúrate de actualizar el nombre en el archivo <code>main.py</code> (alrededor de la línea 12).</p>
+        </div>
+
+        <div>
+            <h2><span>3</span> Ejecutar el Experimento</h2>
+            <p>Por defecto, el código principal evalúa el <strong>MVP A (RAG Vectorial)</strong>. Para correrlo, ejecuta el script principal en la terminal:</p>
+            <pre><code>python main.py</code></pre>
+            <p>La consola te irá indicando cómo el sistema indexa el PDF, lee las preguntas y genera las respuestas. Al finalizar, busca los resultados en <code>data/results.csv</code>.</p>
+        </div>
+
+        <div>
+            <h2><span>4</span> ¿Cómo probar el MVP B (Tree Reasoning)?</h2>
+            <p>Una vez que las "Piezas de Rompecabezas" de la API de PageIndex estén configuradas (ver README.md), puedes evaluar el MVP B editando el archivo <code>main.py</code>. Busca estas líneas:</p>
+            <pre><code># Usa esto para RAG
+mvp_a = VectorRAGController(chunk_size=500, overlap=100, top_k=2)
+orchestrator = ExperimentOrchestrator(retriever=mvp_a)</code></pre>
+            <p>Y reemplázalas por:</p>
+            <pre><code>from src.mvp_b_vectorless.tree_controller import TreeReasoningController
+
+# Usa esto para Tree Reasoning
+mvp_b = TreeReasoningController()
+orchestrator = ExperimentOrchestrator(retriever=mvp_b)</code></pre>
+        </div>
+
+        <div class="note">
+            <strong>🧩 Información Importante:</strong> El código actual está operando en <i>"Modo Simulación"</i> para el LLM y el MVP B. Las respuestas que verás en el CSV dirán "[LLM Mock]" o "[MVP B Contexto Simulado]" hasta que introduzcas las llaves API reales en <code>llm_client.py</code> y <code>tree_controller.py</code>.
+        </div>
+    </div>
+</body>
+</html>
