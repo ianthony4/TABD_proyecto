@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Avance - Estudio Comparativo RAG vs Tree Reasoning</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+        }
+
+        header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .highlight-box {
+            background-color: #e8f4f8;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            border: 1px solid #bce0ec;
+        }
+
+        .future-box {
+            background-color: #fff4e6;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            border: 1px solid #ffd8a8;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            background-color: #2ecc71;
+            margin-bottom: 10px;
+        }
+
+        .badge.future {
+            background-color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Reporte de Fase 1: Scaffolding y MVP A</h1>
+            <p>Entorno de pruebas automatizado para el estudio comparativo de recuperación de información médica.</p>
+        </header>
+
+        <section>
+            <h2 class="section-title">Contexto del Proyecto</h2>
+            <p>Se ha construido la infraestructura base (scaffolding) orientada a objetos para evaluar y comparar dos enfoques arquitectónicos frente a bases de conocimiento médico (Documentos del MINSA):</p>
+            <ul>
+                <li><strong>MVP A:</strong> Recuperación tradicional (RAG Vectorial con Embeddings y ChromaDB).</li>
+                <li><strong>MVP B:</strong> Recuperación Vectorless / Tree Reasoning (Estructuración mediante PageIndex).</li>
+            </ul>
+            <p>El diseño garantiza una integración limpia, mediante el uso de interfaces abstractas, permitiendo intercambiar el modelo de recuperación (Retriever) sin modificar la lógica del orquestador.</p>
+        </section>
+
+        <section>
+            <h2 class="section-title">Estructura y Archivos del Proyecto</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>src/interfaces/retriever_interface.py</h3>
+                    <p>Contiene la clase abstracta <code>BaseRetriever</code>. Define un contrato estricto con los métodos <code>index(pdf_path)</code> y <code>query(question)</code>. Esto es vital para el polimorfismo del orquestador.</p>
+                </div>
+                
+                <div class="card">
+                    <h3>src/mvp_a_vectorial/chunker.py</h3>
+                    <p>Módulo de procesamiento de PDFs usando <code>pdfplumber</code>. Se encarga de dividir el texto extraído en fragmentos superpuestos para no perder contexto entre las divisiones.</p>
+                </div>
+
+                <div class="card">
+                    <h3>src/mvp_a_vectorial/embedder.py</h3>
+                    <p>Gestiona la creación de embeddings con el modelo local <code>all-MiniLM-L6-v2</code> de <i>Sentence-Transformers</i> y la persistencia efímera en la base de datos vectorial <code>ChromaDB</code>.</p>
+                </div>
+
+                <div class="card">
+                    <h3>src/mvp_a_vectorial/vector_controller.py</h3>
+                    <p>Implementa <code>BaseRetriever</code>. Orquesta exclusivamente el pipeline del MVP A, inyectando el <b>Chunker</b> y el <b>Embedder</b> para ofrecer una interfaz unificada de indexación y búsqueda.</p>
+                </div>
+
+                <div class="card">
+                    <h3>src/orchestrator.py</h3>
+                    <p>El bucle central del Test Harness. Recibe un retriever activo, lee las preguntas ground-truth desde un archivo CSV con <i>pandas</i>, ejecuta la consulta y almacena los resultados esperados vs obtenidos.</p>
+                </div>
+
+                <div class="card">
+                    <h3>src/llm_client.py</h3>
+                    <p>Capa de abstracción (Mock) para el LLM. Actualmente simula la generación de respuestas. En el futuro, alojará las peticiones HTTP al API de <b>Google MedGemma</b>.</p>
+                </div>
+
+                <div class="card">
+                    <h3>src/evaluator.py</h3>
+                    <p>Contiene la clase estática encargada de calcular métricas. Se ha implementado el scaffold para la métrica base de validación cruzada (Exact Match).</p>
+                </div>
+
+                <div class="card">
+                    <h3>main.py</h3>
+                    <p>Punto de entrada de la aplicación. Crea los datos simulados de forma dinámica e inicializa el pipeline inyectando la dependencia de <b>MVP A</b> en el <b>Orquestador</b>.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="highlight-box">
+                <h2 style="margin-top:0; color: #2c3e50;">✅ Logros de la Fase 1 (MVP A)</h2>
+                <span class="badge">Completado</span>
+                <ul>
+                    <li><strong>Arquitectura Sólida:</strong> Aplicación estricta de Principios SOLID, permitiendo la escalabilidad para inyectar nuevos MVPs en el futuro con cero impacto al código existente.</li>
+                    <li><strong>Pipeline RAG Funcional:</strong> Se implementó la lógica completa desde la extracción del PDF, normalización (chunking con overlap), creación de embeddings vectoriales y búsqueda por distancia (Cosine Similarity).</li>
+                    <li><strong>Automatización del Test Harness:</strong> El orquestador es completamente funcional; es capaz de iterar dinámicamente archivos CSV, invocar búsquedas de contexto y generar un reporte de resultados procesable automáticamente por <i>pandas</i>.</li>
+                    <li><strong>Mocking Preparado:</strong> La transición a un LLM real requiere de la modificación de un solo método, gracias al diseño del cliente <code>MockMedGemmaClient</code>.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <div class="future-box">
+                <h2 style="margin-top:0; color: #d35400;">🚀 Trabajo Futuro (Fase 2: MVP B)</h2>
+                <span class="badge future">Pendiente</span>
+                <ul>
+                    <li><strong>Desarrollo del TreeReasoningController:</strong> Actualmente existe el archivo <code>src/mvp_b_vectorless/tree_controller.py</code> actuando como un <i>placeholder</i> que hereda de <code>BaseRetriever</code>. Se deberá implementar la lógica interna.</li>
+                    <li><strong>Construcción del PageIndex:</strong> Diseñar y programar el sistema de indexación jerárquica (Vectorless) extrayendo la estructura profunda del documento PDF del MINSA.</li>
+                    <li><strong>Mecanismo de Recuperación (Tree Reasoning):</strong> Implementar el algoritmo de navegación por el árbol de conocimiento en sustitución de la búsqueda de similitud coseno vectorial.</li>
+                    <li><strong>Integración con Google MedGemma:</strong> Reemplazar el Mock por el SDK real o peticiones HTTP.</li>
+                    <li><strong>Métricas Avanzadas en Evaluator:</strong> Añadir a <code>evaluator.py</code> el cálculo de ROUGE-L, BLEU u otras métricas de similitud semántica.</li>
+                </ul>
+            </div>
+        </section>
+        
+        <footer style="margin-top: 40px; text-align: center; color: #7f8c8d; font-size: 0.9rem;">
+            <p>Generado automáticamente - Sistema de Scaffolding & AI Engineering</p>
+        </footer>
+    </div>
+</body>
+</html>
